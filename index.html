@@ -507,6 +507,13 @@
     .icon-badge svg{filter:none;}
     .ring-thumb svg{filter:drop-shadow(0 0 5px rgba(14,122,244,0.55));}
     .benefit-card:hover, .about-points .item:hover{transform:none;}
+
+    /* remove scroll-triggered reveal animations entirely — show content immediately */
+    .reveal, .reveal-scale{
+      opacity:1 !important;
+      transform:none !important;
+      transition:none !important;
+    }
   }
 
   @media (max-width:380px){
@@ -934,8 +941,9 @@
   document.getElementById('floatWa').href =
     `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in the Customer Support Representative role at Quad Solutions.")}`;
 
-  // ---- Parallax background orbs on scroll ----
+  // ---- Parallax background orbs on scroll (desktop only — skipped on mobile for smooth scrolling) ----
   const orbs = document.querySelectorAll('.parallax-el');
+  const isMobile = window.matchMedia('(max-width:760px)').matches;
   let ticking = false;
   function updateParallax(){
     const y = window.scrollY;
@@ -945,40 +953,46 @@
     });
     ticking = false;
   }
-  window.addEventListener('scroll', () => {
-    if(!ticking){ requestAnimationFrame(updateParallax); ticking = true; }
-  }, {passive:true});
-  updateParallax();
+  if(!isMobile){
+    window.addEventListener('scroll', () => {
+      if(!ticking){ requestAnimationFrame(updateParallax); ticking = true; }
+    }, {passive:true});
+    updateParallax();
+  }
 
-  // ---- Reveal-on-scroll for content blocks ----
-  const revealTargets = document.querySelectorAll(
-    '.section-head, .about-points .item, .benefit-card, #role .card, .process-step, .apply-shell, .faq-item'
-  );
-  revealTargets.forEach((el, i) => {
-    el.classList.add('reveal');
-    el.style.transitionDelay = (i % 6) * 0.06 + 's';
-  });
-
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting){
-        entry.target.classList.add('visible');
-        io.unobserve(entry.target);
-      }
+  // ---- Reveal-on-scroll for content blocks (desktop only) ----
+  if(!isMobile){
+    const revealTargets = document.querySelectorAll(
+      '.section-head, .about-points .item, .benefit-card, #role .card, .process-step, .apply-shell, .faq-item'
+    );
+    revealTargets.forEach((el, i) => {
+      el.classList.add('reveal');
+      el.style.transitionDelay = (i % 6) * 0.06 + 's';
     });
-  }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
 
-  revealTargets.forEach(el => io.observe(el));
-
-  // Hero elements reveal immediately on load
-  window.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.hero .eyebrow, .hero h1, .hero p.lead, .hero-ctas, .hero-stats, .queue-panel-wrap')
-      .forEach((el, i) => {
-        el.classList.add('reveal');
-        el.style.transitionDelay = (i * 0.08) + 's';
-        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting){
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
       });
-  });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+    revealTargets.forEach(el => io.observe(el));
+  }
+
+  // Hero elements reveal immediately on load (desktop only — instant on mobile)
+  if(!isMobile){
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.hero .eyebrow, .hero h1, .hero p.lead, .hero-ctas, .hero-stats, .queue-panel-wrap')
+        .forEach((el, i) => {
+          el.classList.add('reveal');
+          el.style.transitionDelay = (i * 0.08) + 's';
+          requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+        });
+    });
+  }
 
   // ---- Live call queue simulation ----
   const queueList = document.getElementById('queueList');
