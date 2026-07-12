@@ -413,7 +413,7 @@
 
     /* Nav */
     nav{padding:14px 18px;}
-    .brand-logo{height:34px;}
+    .brand-logo{height:46px;}
     .nav-cta{padding:8px 16px;font-size:12.5px;}
 
     /* Hero */
@@ -485,7 +485,7 @@
 
     /* Footer */
     footer{padding:36px 0 20px;}
-    .footer-logo{height:38px;}
+    .footer-logo{height:48px;}
     .footer-top{margin-bottom:22px;gap:16px;}
     .footer-links{gap:16px 20px;font-size:12.5px;}
     .footer-bottom{flex-direction:column;gap:8px;font-size:11.5px;}
@@ -496,9 +496,22 @@
     .toast{max-width:calc(100% - 32px);text-align:center;font-size:13px;padding:12px 16px;}
   }
 
+  /* ---- Mobile performance: reduce expensive filters/animations for smooth scrolling ---- */
+  @media (max-width:760px){
+    header{backdrop-filter:none;background:rgba(5,9,18,0.97);}
+    .queue-panel{backdrop-filter:none;}
+    .ring-a{filter:drop-shadow(0 0 8px rgba(14,122,244,0.7));}
+    .ring-b{filter:drop-shadow(0 0 6px rgba(92,169,255,0.6));}
+    .ring-spin-a, .ring-spin-b{animation:none;}
+    .queue-panel-wrap::before{animation:none;filter:blur(4px);opacity:.4;}
+    .icon-badge svg{filter:none;}
+    .ring-thumb svg{filter:drop-shadow(0 0 5px rgba(14,122,244,0.55));}
+    .benefit-card:hover, .about-points .item:hover{transform:none;}
+  }
+
   @media (max-width:380px){
     .hero h1{font-size:25px;}
-    .brand-logo{height:30px;}
+    .brand-logo{height:40px;}
   }
 </style>
 </head>
