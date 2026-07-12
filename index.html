@@ -502,8 +502,9 @@
     .queue-panel{backdrop-filter:none;}
     .ring-a{filter:drop-shadow(0 0 8px rgba(14,122,244,0.7));}
     .ring-b{filter:drop-shadow(0 0 6px rgba(92,169,255,0.6));}
-    .ring-spin-a, .ring-spin-b{animation:none;}
-    .queue-panel-wrap::before{animation:none;filter:blur(4px);opacity:.4;}
+    .ring-spin-a{animation:spinA 22s linear infinite;}
+    .ring-spin-b{animation:spinB 26s linear infinite reverse;}
+    .queue-panel-wrap::before{animation:rotateGlow 8s linear infinite;filter:blur(4px);opacity:.4;}
     .icon-badge svg{filter:none;}
     .ring-thumb svg{filter:drop-shadow(0 0 5px rgba(14,122,244,0.55));}
     .benefit-card:hover, .about-points .item:hover{transform:none;}
