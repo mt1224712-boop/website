@@ -996,6 +996,9 @@
   }
 
   // ---- Live call queue simulation ----
+  // Fixed 4 slots are created ONCE and never added/removed — only their
+  // content is updated in place, so the widget's height never changes
+  // and the page can never jump or shift while scrolling.
   const queueList = document.getElementById('queueList');
   const agentsEl = document.getElementById('agentsOnline');
   const callerPool = [
@@ -1012,8 +1015,7 @@
     { name: 'Hamza S.', topic: 'Subscription query' },
     { name: 'Noor F.', topic: 'Product complaint' },
   ];
-  const MAX_VISIBLE = 4;
-  let queueItems = [];
+  const SLOT_COUNT = 4;
 
   function initials(name){
     return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
@@ -1033,61 +1035,74 @@
     el.style.setProperty('--accent', accents[cls]);
   }
 
-  function spawnCaller(){
-    if(queueItems.length >= MAX_VISIBLE) return;
-    const caller = callerPool[Math.floor(Math.random() * callerPool.length)];
-    const el = document.createElement('div');
-    el.className = 'queue-item';
-    el.dataset.start = Date.now();
-    el.innerHTML = `
-      <div class="queue-avatar">${initials(caller.name)}</div>
-      <div class="queue-meta">
-        <b>${caller.name}</b>
-        <span>${caller.topic}</span>
-      </div>
-      <div class="queue-right">
-        <span class="queue-timer">0:00</span>
-        <span class="queue-status-text waiting"><span class="sdot"></span>Waiting</span>
-      </div>
-    `;
-    queueList.appendChild(el);
-    queueItems.push(el);
-    setStatus(el, 'Waiting', 'waiting');
+  function pickCaller(exclude){
+    let c;
+    do { c = callerPool[Math.floor(Math.random() * callerPool.length)]; }
+    while (callerPool.length > 1 && exclude && c.name === exclude);
+    return c;
+  }
 
-    // Waiting -> Connecting
-    setTimeout(() => setStatus(el, 'Connecting', 'connecting'), 2200 + Math.random()*800);
+  function runSlotCycle(slot){
+    const caller = pickCaller(slot.dataset.lastName);
+    slot.dataset.lastName = caller.name;
+    slot.dataset.start = Date.now();
 
-    // Connecting -> Connected
+    const avatar = slot.querySelector('.queue-avatar');
+    const nameEl = slot.querySelector('.queue-meta b');
+    const topicEl = slot.querySelector('.queue-meta span');
+
+    // fade content out, swap it, fade back in — no layout/height change at all
+    slot.style.opacity = '0';
     setTimeout(() => {
-      setStatus(el, 'Connected', 'connected');
-      const avatar = el.querySelector('.queue-avatar');
-      if(avatar){
-        avatar.classList.add('connected');
-        avatar.innerHTML = '<span class="eq"><i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.3s"></i></span>';
-      }
-    }, 4600 + Math.random()*800);
+      avatar.classList.remove('connected');
+      avatar.textContent = initials(caller.name);
+      nameEl.textContent = caller.name;
+      topicEl.textContent = caller.topic;
+      setStatus(slot, 'Waiting', 'waiting');
+      slot.style.opacity = '1';
+    }, 220);
 
-    // Leave the queue
+    const waitDelay = 2200 + Math.random()*800;
+    const connectDelay = 4600 + Math.random()*800;
+    const cycleDelay = 8500 + Math.random()*1500;
+
+    setTimeout(() => setStatus(slot, 'Connecting', 'connecting'), waitDelay);
+
     setTimeout(() => {
-      el.classList.add('leaving');
-      setTimeout(() => {
-        el.remove();
-        queueItems = queueItems.filter(i => i !== el);
-      }, 400);
-    }, 8500 + Math.random()*1500);
+      setStatus(slot, 'Connected', 'connected');
+      avatar.classList.add('connected');
+      avatar.innerHTML = '<span class="eq"><i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.3s"></i></span>';
+    }, connectDelay);
+
+    slot.dataset.nextCycle = Date.now() + cycleDelay;
+    setTimeout(() => runSlotCycle(slot), cycleDelay);
   }
 
   if(queueList){
-    spawnCaller();
-    setTimeout(spawnCaller, 1400);
-    setTimeout(spawnCaller, 3000);
-    setInterval(spawnCaller, 4800);
+    for(let i = 0; i < SLOT_COUNT; i++){
+      const slot = document.createElement('div');
+      slot.className = 'queue-item';
+      slot.style.transition = 'opacity .22s ease';
+      slot.innerHTML = `
+        <div class="queue-avatar"></div>
+        <div class="queue-meta">
+          <b></b>
+          <span></span>
+        </div>
+        <div class="queue-right">
+          <span class="queue-timer">0:00</span>
+          <span class="queue-status-text waiting"><span class="sdot"></span>Waiting</span>
+        </div>
+      `;
+      queueList.appendChild(slot);
+      setTimeout(() => runSlotCycle(slot), i * 700);
+    }
 
-    // tick elapsed timers
+    // tick elapsed timers for all 4 fixed slots
     setInterval(() => {
-      queueItems.forEach(el => {
+      queueList.querySelectorAll('.queue-item').forEach(el => {
         const timer = el.querySelector('.queue-timer');
-        if(!timer) return;
+        if(!timer || !el.dataset.start) return;
         const secs = Math.floor((Date.now() - Number(el.dataset.start)) / 1000);
         const m = Math.floor(secs / 60);
         const s = String(secs % 60).padStart(2, '0');
